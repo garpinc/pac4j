@@ -20,6 +20,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
 import com.nimbusds.jose.proc.JWSVerifierFactory;
+import com.nimbusds.jose.util.X509CertUtils;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.security.Key;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -125,7 +127,7 @@ public class JwtAuthenticator implements TokenAuthenticator {
             }
             
     		JWSVerifier verifier = factory.createJWSVerifier(signedJWT.getHeader(), key);
-    		
+
             verified = signedJWT.verify(verifier);
         } catch (final Exception e) {
             throw new TechnicalException("Cannot decrypt / verify JWT", e);
@@ -180,7 +182,12 @@ public class JwtAuthenticator implements TokenAuthenticator {
      * @since 1.8.2
      */
     public void setSigningSecret(final String signingSecret) {
-        this.key = new SecretKeySpec(signingSecret.getBytes(Charset.forName("UTF-8")), "AES");
+    	X509Certificate cert = X509CertUtils.parse(signingSecret);
+    	if (cert == null) {
+    		this.key = new SecretKeySpec(signingSecret.getBytes(Charset.forName("UTF-8")), "AES");
+    	} else {
+    		this.key = cert.getPublicKey();
+    	}
     }
 
     /**
