@@ -41,7 +41,10 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -82,6 +85,16 @@ public class JwtAuthenticator implements TokenAuthenticator {
      */
     public JwtAuthenticator(final String signingSecret, final String encryptionSecret) {
     	setSigningSecret(signingSecret);
+        this.encryptionSecret = encryptionSecret;
+    }
+    
+    /**
+     * @throws InvalidKeySpecException 
+     * @throws NoSuchAlgorithmException 
+     * @since 1.8.2
+     */
+    public JwtAuthenticator(final String publicKeyPEM, final String algorithm, final String encryptionSecret) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    	setSigningPem(publicKeyPEM, algorithm);
         this.encryptionSecret = encryptionSecret;
     }
 
@@ -175,7 +188,7 @@ public class JwtAuthenticator implements TokenAuthenticator {
      * @since 1.8.2
      */
     public String getSigningSecret() {
-        return key.getFormat();
+        return new String(key.getEncoded(), Charset.forName("UTF-8"));
     }
 
     /**
@@ -188,6 +201,25 @@ public class JwtAuthenticator implements TokenAuthenticator {
     	} else {
     		this.key = cert.getPublicKey();
     	}
+    }
+    
+    /**
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeySpecException 
+     * @since 1.8.2
+     */
+    public void setSigningPem(final String publicKeyPEM, final String algorithm) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    	// from http://stackoverflow.com/questions/35739932/how-do-i-decode-a-jwt-token-using-an-rsa-public-key-in-pem-format
+    	// decode to its constituent bytes
+    	String publicKeyPEMToUse = publicKeyPEM;
+    	publicKeyPEMToUse = publicKeyPEMToUse.replace("-----BEGIN PUBLIC KEY-----\n", "");
+    	publicKeyPEMToUse = publicKeyPEMToUse.replace("-----END PUBLIC KEY-----", "");
+    	byte[] publicKeyBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(publicKeyPEMToUse);
+
+    	java.security.spec.X509EncodedKeySpec keySpec = new java.security.spec.X509EncodedKeySpec(publicKeyBytes);
+
+    	KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+    	this.key = keyFactory.generatePublic(keySpec);
     }
 
     /**
