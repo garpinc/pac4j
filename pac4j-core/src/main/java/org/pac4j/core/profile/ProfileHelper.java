@@ -109,7 +109,7 @@ public final class ProfileHelper {
         return completeName;
     }
 
-    private static UserProfile buildUserProfileByClassCompleteName(final String typedId, final Map<String, Object> attributes,
+    public static UserProfile buildUserProfileByClassCompleteName(final String typedId, final Map<String, Object> attributes,
                                                                    final String completeName)
             throws Exception {
         @SuppressWarnings("unchecked")
