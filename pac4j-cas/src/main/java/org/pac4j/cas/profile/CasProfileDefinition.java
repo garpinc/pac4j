@@ -2,9 +2,7 @@ package org.pac4j.cas.profile;
 
 import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.pac4j.cas.client.CasProxyReceptor;
-import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.profile.CommonProfile;
-import org.pac4j.core.profile.converter.Converters;
 import org.pac4j.core.profile.definition.CommonProfileDefinition;
 
 /**
@@ -28,19 +26,5 @@ public class CasProfileDefinition extends CommonProfileDefinition<CommonProfile>
             }
             return casProfile;
         });
-    }
-
-    @Override
-    protected void configurePrimaryAttributes() {
-        primary(EMAIL, Converters.STRING);
-        primary(FIRST_NAME, Converters.STRING);
-        primary(FAMILY_NAME, Converters.STRING);
-        primary(DISPLAY_NAME, Converters.STRING);
-        primary(GENDER, Converters.STRING);
-        primary(LOCALE, Converters.STRING);
-        primary(PICTURE_URL, Converters.STRING);
-        primary(PROFILE_URL, Converters.STRING);
-        primary(LOCATION, Converters.STRING);
-        primary(Pac4jConstants.USERNAME, Converters.STRING);
     }
 }

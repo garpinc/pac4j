@@ -24,10 +24,6 @@ public abstract class InitializableObject {
         }
     }
 
-    public final boolean isInitialized() {
-        return this.initialized;
-    }
-    
     /**
      * Internal initialization of the object.
      */

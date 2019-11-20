@@ -46,7 +46,7 @@ public class OidcClient<V extends OidcConfiguration> extends IndirectClient<Oidc
         defaultRedirectionActionBuilder(new OidcRedirectionActionBuilder(configuration, this));
         defaultCredentialsExtractor(new OidcExtractor(configuration, this));
         defaultAuthenticator(new OidcAuthenticator(configuration, this));
-        defaultProfileCreator(new OidcProfileCreator(configuration, this));
+        defaultProfileCreator(new OidcProfileCreator(configuration));
         defaultLogoutActionBuilder(new OidcLogoutActionBuilder(configuration));
     }
 

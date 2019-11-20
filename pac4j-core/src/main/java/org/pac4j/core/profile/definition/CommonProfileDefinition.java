@@ -25,10 +25,6 @@ public class CommonProfileDefinition<P extends CommonProfile> extends ProfileDef
     public static final String LOCATION = "location";
 
     public CommonProfileDefinition() {
-        configurePrimaryAttributes();
-    }
-
-    protected void configurePrimaryAttributes() {
         primary(EMAIL, Converters.STRING);
         primary(FIRST_NAME, Converters.STRING);
         primary(FAMILY_NAME, Converters.STRING);

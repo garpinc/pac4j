@@ -17,8 +17,8 @@ public final class GenderConverter extends AbstractAttributeConverter<Gender> {
 
     public GenderConverter() {
         super(Gender.class);
-        this.maleText = Pattern.compile("(^m$)|(^male$)", Pattern.CASE_INSENSITIVE);
-        this.femaleText = Pattern.compile("(^f$)|(^female$)", Pattern.CASE_INSENSITIVE);
+        this.maleText = Pattern.compile("(^m$)|(^male$)");
+        this.femaleText = Pattern.compile("(^f$)|(^female$)");
     }
 
     public GenderConverter(final String maleText, final String femaleText) {

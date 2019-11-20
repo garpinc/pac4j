@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.pac4j</groupId>
         <artifactId>pac4j</artifactId>
-        <version>4.0.0-RC2-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>pac4j-cas</artifactId>
@@ -13,7 +13,7 @@
     <name>pac4j for CAS protocol</name>
 
     <properties>
-        <cas.version>3.6.1</cas.version>
+        <cas.version>3.5.1</cas.version>
     </properties>
 
     <dependencies>

@@ -19,7 +19,6 @@ import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.profile.definition.ProfileDefinitionAware;
 import org.pac4j.core.profile.jwt.JwtClaims;
-import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.profile.OidcProfile;
@@ -46,13 +45,10 @@ public class OidcProfileCreator extends ProfileDefinitionAware implements Profil
 
     protected OidcConfiguration configuration;
 
-    protected OidcClient client;
-
     protected TokenValidator tokenValidator;
 
-    public OidcProfileCreator(final OidcConfiguration configuration, final OidcClient client) {
+    public OidcProfileCreator(final OidcConfiguration configuration) {
         this.configuration = configuration;
-        this.client = client;
     }
 
     @Override
@@ -89,7 +85,7 @@ public class OidcProfileCreator extends ProfileDefinitionAware implements Profil
 
             final Nonce nonce;
             if (configuration.isUseNonce()) {
-                nonce = new Nonce((String) context.getSessionStore().get(context, client.getNonceSessionAttributeName()).orElse(null));
+                nonce = new Nonce((String) context.getSessionStore().get(context, OidcConfiguration.NONCE_SESSION_ATTRIBUTE).orElse(null));
             } else {
                 nonce = null;
             }

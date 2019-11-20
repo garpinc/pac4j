@@ -76,12 +76,10 @@ Or you can even use the empty constructor and the appropriate setters:
 Finally, you need to declare the `SAML2Client` based on the previous configuration:
 
 ```java
-SAML2Client client = new SAML2Client(cfg);
+Saml2Client client = new Saml2Client(cfg);
 ```
 
 After a successful authentication, a [`SAML2Profile`](https://github.com/pac4j/pac4j/blob/master/pac4j-saml/src/main/java/org/pac4j/saml/profile/SAML2Profile.java) is returned.
-
-The `SAML2Client` configures a `ReplayCache`, which protects against replay attacks. This `ReplayCache` must keep state between authentications. Therefore a single instance of the `SAML2Client` must be used. If this is not possible, you can override the `initSAMLReplayCache` method to create a custom `ReplayCacheProvider`.
 
 ## 3) Additional configuration:
 
@@ -100,14 +98,7 @@ cfg.setAuthnRequestBindingType(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 // or cfg.setAuthnRequestBindingType(SAMLConstants.SAML2_POST_SIMPLE_SIGN_BINDING_URI);
 ```
 
-You can define the binding type for the authentication response via the `setResponseBindingType` method (defaults to POST):
-
-```java
-cfg.setResponseBindingType(SAMLConstants.SAML2_POST_BINDING_URI);
-// or cfg.setResponseBindingType(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
-```
-
-Notice that the SP metadata will define the POST binding for the IdP logout request.
+Notice that the SP metadata will define the POST binding for the authentication response and for the IdP logout request.
 
 Once you have an authenticated web session on the Identity Provider, usually it won't prompt you again to enter your credentials and it will automatically generate a new assertion for you. By default, the SAML client will accept assertions based on a previous authentication for one hour. If you want to change this behavior, set the `maximumAuthenticationLifetime` parameter:
 
@@ -122,13 +113,6 @@ But you can force your own entity ID with the `serviceProviderEntityId` paramete
 ```java
 // custom SP entity ID
 cfg.setServiceProviderEntityId("http://localhost:8080/callback?extraParameter");
-```
-
-By SAML specification, the authentication request must not contain a NameQualifier, if the SP entity is in the format nameid-format:entity. However, some IdP require that information to be present. You can force a NameQualifier in the request with the `useNameQualifier` parameter:
-
-```java
-// force NameQualifier in the authn request
-cfg.setUseNameQualifier(true);
 ```
 
 To allow the authentication request sent to the identity provider to specify an attribute consuming index:
@@ -154,11 +138,10 @@ cfg.setSignatureReferenceDigestMethods(...);
 cfg.setSignatureCanonicalizationAlgorithm(...);
 ```
 
-The SAML client always requires assertions to be signed either directly or via the response that contains them. 
-When the assertions need to be processed separate of the response, you can request them to be signed directly using:
- 
+By default, assertions must be signed, but this may be disabled using:
+
 ```java
-cfg.setWantsAssertionsSigned(true);
+cfg.setWantsAssertionsSigned(false);
 ```
 
 You may also want to enable signing of the authentication requests using:
@@ -181,11 +164,11 @@ The SAML support handles the HTTP-POST and the HTTP-Redirect bindings for logout
 
 The `SAML2Client` can participate in the central logout and send a logout request to the IdP.
 The binding of this request is controlled by the `spLogoutRequestBindingType` property and
-the request can be signed using the `spLogoutRequestSigned` property of the `SAML2Configuration`. 
+the request can be signed using the `spLogoutRequestSigned` property of the `SAML2Configuration`.
 
 When calling the IdP, the SAML *pac4j* application locally removes the user profiles and optionally destroys the web session based on the [`DefaultLogoutHandler`](https://github.com/pac4j/pac4j/blob/master/pac4j-core/src/main/java/org/pac4j/core/logout/handler/DefaultLogoutHandler.java).
 You may use your own logout handler by implementing the [`LogoutHandler`](https://github.com/pac4j/pac4j/blob/master/pac4j-core/src/main/java/org/pac4j/core/logout/handler/LogoutHandler.java) interface
-and define it in the SAML configuration. By default at the last step of SP initiated logout user will see a blank page. It is possible to customize default *pac4j* behavior using the `postLogoutURL` property of the `SAML2Configuration`.
+and define it in the SAML configuration.
 
 When called by the IdP, the SAML *pac4j* application also removes the user profiles based on the logout handler and returns a logout response with a binding defined by the `spLogoutResponseBindingType` property (in the `SAML2Configuration`).
 
@@ -233,7 +216,8 @@ Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files c
 
 ### c) Disable Name Qualifier for format urn:oasis:names:tc:SAML:2.0:nameid-format:entity
 
-ADFS 3.0 does not accept NameQualifier when using urn:oasis:names:tc:SAML:2.0:nameid-format:entity. For this reason, the parameter `useNameQualifier` in the `SAML2Configuration` must be set to false, which is the default value.
+ADFS 3.0 does not accept NameQualifier when using urn:oasis:names:tc:SAML:2.0:nameid-format:entity. In the `SAML2Configuration`, you can use setUseNameQualifier to disable the NameQualifier from SAML Request.
+
 
 # Integration with various IdPs
 

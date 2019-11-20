@@ -30,9 +30,7 @@ import java.util.Optional;
  */
 public abstract class IndirectClient<C extends Credentials> extends BaseClient<C> {
 
-    public static final String ATTEMPTED_AUTHENTICATION_SUFFIX = "$attemptedAuthentication";
-    private static final String STATE_SESSION_PARAMETER = "$stateSessionParameter";
-    private static final String NONCE_SESSION_PARAMETER = "$nonceSessionParameter";
+    public final static String ATTEMPTED_AUTHENTICATION_SUFFIX = "$attemptedAuthentication";
 
     protected String callbackUrl;
 
@@ -87,7 +85,7 @@ public abstract class IndirectClient<C extends Credentials> extends BaseClient<C
      * @return the "redirection" action
      */
     @Override
-    public final Optional<RedirectionAction> getRedirectionAction(final WebContext context) {
+    public final Optional<RedirectionAction> redirect(final WebContext context) {
         init();
         // it's an AJAX request -> appropriate action
         if (ajaxRequestResolver.isAjax(context)) {
@@ -105,7 +103,7 @@ public abstract class IndirectClient<C extends Credentials> extends BaseClient<C
             throw UnauthorizedAction.INSTANCE;
         }
 
-        return redirectionActionBuilder.getRedirectionAction(context);
+        return redirectionActionBuilder.redirect(context);
     }
 
     private void cleanRequestedUrl(final WebContext context) {
@@ -213,14 +211,6 @@ public abstract class IndirectClient<C extends Credentials> extends BaseClient<C
 
     public void setLogoutActionBuilder(final LogoutActionBuilder logoutActionBuilder) {
         this.logoutActionBuilder = logoutActionBuilder;
-    }
-
-    public String getStateSessionAttributeName() {
-        return getName() + STATE_SESSION_PARAMETER;
-    }
-
-    public String getNonceSessionAttributeName() {
-        return getName() + NONCE_SESSION_PARAMETER;
     }
 
     @Override

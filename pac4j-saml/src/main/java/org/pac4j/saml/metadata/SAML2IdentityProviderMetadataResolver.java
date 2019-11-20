@@ -8,7 +8,6 @@ import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.DOMMetadataResolver;
-import org.opensaml.saml.metadata.resolver.index.impl.RoleMetadataIndex;
 import org.opensaml.saml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.pac4j.core.exception.TechnicalException;
@@ -26,7 +25,6 @@ import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -70,7 +68,6 @@ public class SAML2IdentityProviderMetadataResolver implements SAML2MetadataResol
                 final Document inCommonMDDoc = Configuration.getParserPool().parse(in);
                 final Element metadataRoot = inCommonMDDoc.getDocumentElement();
                 idpMetadataProvider = new DOMMetadataResolver(metadataRoot);
-                idpMetadataProvider.setIndexes(Collections.singleton(new RoleMetadataIndex()));
                 idpMetadataProvider.setParserPool(Configuration.getParserPool());
                 idpMetadataProvider.setFailFastInitialization(true);
                 idpMetadataProvider.setRequireValidMetadata(true);

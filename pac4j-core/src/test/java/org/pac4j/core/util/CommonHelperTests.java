@@ -192,9 +192,7 @@ public final class CommonHelperTests {
 
     @Test
     public void testRandomStringNChars() {
-        for (int i = 0; i < 128; i++) {
-            testRandomString(i);
-        }
+        Arrays.asList(0, 10, 31, 32, 33, 39).forEach(i -> testRandomString(i));
     }
 
     private void testRandomString(final int size) {

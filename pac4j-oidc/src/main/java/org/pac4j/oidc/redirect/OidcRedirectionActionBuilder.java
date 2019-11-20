@@ -66,7 +66,7 @@ public class OidcRedirectionActionBuilder implements RedirectionActionBuilder {
     }
 
     @Override
-    public Optional<RedirectionAction> getRedirectionAction(final WebContext context) {
+    public Optional<RedirectionAction> redirect(final WebContext context) {
         final Map<String, String> params = buildParams();
         final String computedCallbackUrl = client.computeFinalCallbackUrl(context);
         params.put(OidcConfiguration.REDIRECT_URI, computedCallbackUrl);
@@ -96,12 +96,12 @@ public class OidcRedirectionActionBuilder implements RedirectionActionBuilder {
             state = new State();
         }
         params.put(OidcConfiguration.STATE, state.getValue());
-        context.getSessionStore().set(context, client.getStateSessionAttributeName(), state);
+        context.getSessionStore().set(context, OidcConfiguration.STATE_SESSION_ATTRIBUTE, state);
         // Init nonce for replay attack mitigation
         if (configuration.isUseNonce()) {
             final Nonce nonce = new Nonce();
             params.put(OidcConfiguration.NONCE, nonce.getValue());
-            context.getSessionStore().set(context, client.getNonceSessionAttributeName(), nonce.getValue());
+            context.getSessionStore().set(context, OidcConfiguration.NONCE_SESSION_ATTRIBUTE, nonce.getValue());
         }
     }
 

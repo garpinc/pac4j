@@ -43,7 +43,7 @@ public class KeyStoreCredentialProvider implements CredentialProvider {
 
     private final CredentialResolver credentialResolver;
 
-    private final String privateKeyAlias;
+    private final String privateKey;
 
     public KeyStoreCredentialProvider(final String keyStoreAlias, final String keyStoreType,
                                       final Resource keyStoreResource, final String storePasswd, final String privateKeyPasswd) {
@@ -55,9 +55,9 @@ public class KeyStoreCredentialProvider implements CredentialProvider {
         try {
             inputStream = keyStoreResource.getInputStream();
             final KeyStore keyStore = loadKeyStore(inputStream, storePasswd, keyStoreType);
-            this.privateKeyAlias = getPrivateKeyAlias(keyStore, keyStoreAlias);
+            this.privateKey = getPrivateKeyAlias(keyStore, keyStoreAlias);
             final Map<String, String> passwords = new HashMap<>();
-            passwords.put(this.privateKeyAlias, privateKeyPasswd);
+            passwords.put(this.privateKey, privateKeyPasswd);
             this.credentialResolver = new KeyStoreCredentialResolver(keyStore, passwords);
         } catch (final IOException e) {
             throw new SAMLException("Error loading keystore", e);
@@ -106,7 +106,7 @@ public class KeyStoreCredentialProvider implements CredentialProvider {
     public final Credential getCredential() {
         try {
             final CriteriaSet cs = new CriteriaSet();
-            final EntityIdCriterion criteria = new EntityIdCriterion(this.privateKeyAlias);
+            final EntityIdCriterion criteria = new EntityIdCriterion(this.privateKey);
             cs.add(criteria);
             final X509Credential creds = (X509Credential) this.credentialResolver.resolveSingle(cs);
             return creds;

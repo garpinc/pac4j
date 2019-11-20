@@ -77,7 +77,7 @@ public class DirectCasClient extends DirectClient<TokenCredentials> {
             if (!credentials.isPresent()) {
                 // redirect to the login page
                 final String redirectionUrl = CommonUtils.constructRedirectUrl(loginUrl, CasConfiguration.SERVICE_PARAMETER,
-                        callbackUrl, configuration.isRenew(), false, null);
+                        callbackUrl, configuration.isRenew(), false);
                 logger.debug("redirectionUrl: {}", redirectionUrl);
                 throw RedirectionActionHelper.buildRedirectUrlAction(context, redirectionUrl);
             }

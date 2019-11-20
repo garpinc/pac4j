@@ -1,6 +1,5 @@
 package org.pac4j.oidc.profile.azuread;
 
-import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 
@@ -12,8 +11,8 @@ import org.pac4j.oidc.profile.creator.OidcProfileCreator;
  */
 public class AzureAdProfileCreator extends OidcProfileCreator {
 
-    public AzureAdProfileCreator(final OidcConfiguration configuration, final OidcClient client) {
-        super(configuration, client);
+    public AzureAdProfileCreator(final OidcConfiguration configuration) {
+        super(configuration);
     }
 
     @Override

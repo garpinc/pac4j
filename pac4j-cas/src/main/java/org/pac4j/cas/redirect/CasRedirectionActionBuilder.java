@@ -37,11 +37,15 @@ public class CasRedirectionActionBuilder implements RedirectionActionBuilder {
     }
 
     @Override
-    public Optional<RedirectionAction> getRedirectionAction(final WebContext context) {
+    public Optional<RedirectionAction> redirect(final WebContext context) {
         String computeLoginUrl = configuration.computeFinalLoginUrl(context);
+        final String method = configuration.getMethod();
+        if (method != null) {
+            computeLoginUrl = CommonHelper.addParameter(computeLoginUrl, "method", method);
+        }
         final String computedCallbackUrl = client.computeFinalCallbackUrl(context);
         final String redirectionUrl = CommonUtils.constructRedirectUrl(computeLoginUrl, getServiceParameter(),
-                computedCallbackUrl, configuration.isRenew(), configuration.isGateway(), configuration.getMethod());
+                computedCallbackUrl, configuration.isRenew(), configuration.isGateway());
         logger.debug("redirectionUrl: {}", redirectionUrl);
         return Optional.of(RedirectionActionHelper.buildRedirectUrlAction(context, redirectionUrl));
     }

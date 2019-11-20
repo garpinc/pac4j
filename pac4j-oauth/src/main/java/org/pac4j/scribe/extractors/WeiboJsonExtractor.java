@@ -1,6 +1,7 @@
 package org.pac4j.scribe.extractors;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.regex.Pattern;
+
 import org.pac4j.scribe.model.WeiboToken;
 
 import com.github.scribejava.core.exceptions.OAuthException;
@@ -16,6 +17,8 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
  */
 public class WeiboJsonExtractor extends OAuth2AccessTokenJsonExtractor {
 
+    public static final Pattern UID_REGEX = Pattern.compile("\"uid\"\\s*:\\s*\"(\\S*?)\"");
+
     private static class InstanceHolder {
         private static final WeiboJsonExtractor INSTANCE = new WeiboJsonExtractor();
     }
@@ -25,11 +28,11 @@ public class WeiboJsonExtractor extends OAuth2AccessTokenJsonExtractor {
     }
 
     @Override
-    protected OAuth2AccessToken createToken(String accessToken, String tokenType, Integer expiresIn, String refreshToken, String scope,
-                                            JsonNode response, String rawResponse) {
+    protected OAuth2AccessToken createToken(String accessToken, String tokenType, Integer expiresIn,
+                                            String refreshToken, String scope, String response) {
         OAuth2AccessToken token = super.createToken(accessToken, tokenType, expiresIn, refreshToken,
-            scope, response, rawResponse);
-        String uid = extractRequiredParameter(response, "uid", rawResponse).asText();
+            scope, response);
+        String uid = extractParameter(response, UID_REGEX, true);
         if (uid == null || "".equals(uid)) {
             throw new OAuthException(
                 "There is no required UID in the response of the AssessToken endpoint.");

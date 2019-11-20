@@ -1,11 +1,7 @@
 package org.pac4j.jwt.config.encryption;
 
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JWEAlgorithm;
-import com.nimbusds.jose.JWEDecrypter;
-import com.nimbusds.jose.JWEEncrypter;
-import com.nimbusds.jose.crypto.RSADecrypter;
-import com.nimbusds.jose.crypto.RSAEncrypter;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.*;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.util.CommonHelper;
 
@@ -25,8 +21,7 @@ public class RSAEncryptionConfiguration extends AbstractEncryptionConfiguration 
 
     private RSAPrivateKey privateKey;
 
-    public RSAEncryptionConfiguration() {
-    }
+    public RSAEncryptionConfiguration() {}
 
     public RSAEncryptionConfiguration(final KeyPair keyPair) {
         setKeyPair(keyPair);
@@ -40,9 +35,10 @@ public class RSAEncryptionConfiguration extends AbstractEncryptionConfiguration 
 
     @Override
     public boolean supports(final JWEAlgorithm algorithm, final EncryptionMethod method) {
-        return algorithm != null && method != null
-            && RSADecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)
-            && RSADecrypter.SUPPORTED_ENCRYPTION_METHODS.contains(method);
+        if (algorithm != null && method != null) {
+            return RSADecrypter.SUPPORTED_ALGORITHMS.contains(algorithm) && RSADecrypter.SUPPORTED_ENCRYPTION_METHODS.contains(method);
+        }
+        return false;
     }
 
     @Override

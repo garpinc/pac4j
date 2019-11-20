@@ -3,7 +3,6 @@ package org.pac4j.saml.client;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 
-import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.metadata.resolver.ChainingMetadataResolver;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.saml.saml2.core.AuthnRequest;
@@ -25,7 +24,6 @@ import org.pac4j.saml.crypto.DefaultSignatureSigningParametersProvider;
 import org.pac4j.saml.crypto.ExplicitSignatureTrustEngineProvider;
 import org.pac4j.saml.crypto.KeyStoreCredentialProvider;
 import org.pac4j.saml.crypto.KeyStoreDecryptionProvider;
-import org.pac4j.saml.crypto.LogOnlySignatureTrustEngineProvider;
 import org.pac4j.saml.crypto.SAML2SignatureTrustEngineProvider;
 import org.pac4j.saml.crypto.SignatureSigningParametersProvider;
 import org.pac4j.saml.logout.SAML2LogoutActionBuilder;
@@ -37,14 +35,8 @@ import org.pac4j.saml.metadata.SAML2IdentityProviderMetadataResolver;
 import org.pac4j.saml.metadata.SAML2MetadataResolver;
 import org.pac4j.saml.metadata.SAML2ServiceProviderMetadataResolver;
 import org.pac4j.saml.redirect.SAML2RedirectionActionBuilder;
-import org.pac4j.saml.replay.InMemoryReplayCacheProvider;
-import org.pac4j.saml.replay.ReplayCacheProvider;
-import org.pac4j.saml.profile.api.SAML2MessageReceiver;
 import org.pac4j.saml.profile.api.SAML2ProfileHandler;
 import org.pac4j.saml.profile.api.SAML2ResponseValidator;
-import org.pac4j.saml.sso.artifact.DefaultSOAPPipelineProvider;
-import org.pac4j.saml.sso.artifact.SAML2ArtifactBindingMessageReceiver;
-import org.pac4j.saml.sso.artifact.SOAPPipelineProvider;
 import org.pac4j.saml.sso.impl.*;
 import org.pac4j.saml.state.SAML2StateGenerator;
 import org.pac4j.saml.util.Configuration;
@@ -89,10 +81,6 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
 
     protected StateGenerator stateGenerator = new SAML2StateGenerator(this);
 
-    protected ReplayCacheProvider replayCache;
-    
-    protected SOAPPipelineProvider soapPipelineProvider;
-
     static {
         CommonHelper.assertNotNull("parserPool", Configuration.getParserPool());
         CommonHelper.assertNotNull("marshallerFactory", Configuration.getMarshallerFactory());
@@ -121,9 +109,7 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
                 initServiceProviderMetadataResolver());
         initSAMLContextProvider(metadataManager);
         initSignatureTrustEngineProvider(metadataManager);
-        initSAMLReplayCache();
         initSAMLResponseValidator();
-        initSOAPPipelineProvider();
         initSAMLProfileHandler();
         initSAMLLogoutResponseValidator();
         initSAMLLogoutProfileHandler();
@@ -134,28 +120,13 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
         defaultLogoutActionBuilder(new SAML2LogoutActionBuilder(this));
     }
 
-    protected void initSOAPPipelineProvider() {
-        this.soapPipelineProvider = new DefaultSOAPPipelineProvider(this);
-    }
-
     protected void initSAMLProfileHandler() {
-        SAML2MessageReceiver messageReceiver;
-        if (configuration.getResponseBindingType().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
-            messageReceiver = new SAML2WebSSOMessageReceiver(this.authnResponseValidator);
-        } else if (configuration.getResponseBindingType().equals(SAMLConstants.SAML2_ARTIFACT_BINDING_URI)) {
-            messageReceiver = new SAML2ArtifactBindingMessageReceiver(this.authnResponseValidator,
-                    this.idpMetadataResolver, this.spMetadataResolver, this.soapPipelineProvider);
-        } else {
-            throw new TechnicalException(
-                    "Unsupported response binding type: " + configuration.getResponseBindingType());
-        }
-        
         this.profileHandler = new SAML2WebSSOProfileHandler(
                 new SAML2WebSSOMessageSender(this.signatureSigningParametersProvider,
                         this.configuration.getAuthnRequestBindingType(),
                         true,
                         this.configuration.isAuthnRequestSigned()),
-                messageReceiver);
+                new SAML2WebSSOMessageReceiver(this.authnResponseValidator));
     }
 
     protected void initSAMLLogoutProfileHandler() {
@@ -167,7 +138,7 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
 
     protected void initSAMLLogoutResponseValidator() {
         this.logoutValidator = new SAML2LogoutValidator(this.signatureTrustEngineProvider,
-            this.decrypter, this.configuration.getLogoutHandler(), this.configuration.getPostLogoutURL(), this.replayCache);
+            this.decrypter, this.configuration.getLogoutHandler());
         this.logoutValidator.setAcceptedSkew(this.configuration.getAcceptedSkew());
     }
 
@@ -178,17 +149,13 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
                 this.decrypter,
                 this.configuration.getLogoutHandler(),
                 this.configuration.getMaximumAuthenticationLifetime(),
-                this.configuration.isWantsAssertionsSigned(),
-                this.replayCache);
+                this.configuration.isWantsAssertionsSigned());
         this.authnResponseValidator.setAcceptedSkew(this.configuration.getAcceptedSkew());
     }
 
     protected void initSignatureTrustEngineProvider(final MetadataResolver metadataManager) {
         // Build provider for digital signature validation and encryption
         this.signatureTrustEngineProvider = new ExplicitSignatureTrustEngineProvider(metadataManager);
-        if (this.configuration.isAllSignatureValidationDisabled()) {
-            this.signatureTrustEngineProvider = new LogOnlySignatureTrustEngineProvider(this.signatureTrustEngineProvider);
-        }
     }
 
     protected void initSAMLContextProvider(final MetadataResolver metadataManager) {
@@ -239,10 +206,6 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
             throw new TechnicalException("Error initializing manager", e);
         }
         return metadataManager;
-    }
-    
-    protected void initSAMLReplayCache() {
-        replayCache = new InMemoryReplayCacheProvider();
     }
 
     public void destroy() {
@@ -313,9 +276,5 @@ public class SAML2Client extends IndirectClient<SAML2Credentials> {
 
     public void setLogoutProfileHandler(final SAML2ProfileHandler<LogoutRequest> logoutProfileHandler) {
         this.logoutProfileHandler = logoutProfileHandler;
-    }
-
-    public ReplayCacheProvider getReplayCache() {
-        return replayCache;
     }
 }

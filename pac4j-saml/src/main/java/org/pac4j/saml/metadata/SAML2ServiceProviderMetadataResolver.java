@@ -1,5 +1,6 @@
 package org.pac4j.saml.metadata;
 
+import net.shibboleth.tool.xmlsectool.XMLSecTool;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.apache.commons.io.FileUtils;
@@ -26,6 +27,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Misagh Moayyed
@@ -37,9 +39,9 @@ public class SAML2ServiceProviderMetadataResolver implements SAML2MetadataResolv
 
     protected static final Logger logger = LoggerFactory.getLogger(SAML2ServiceProviderMetadataResolver.class);
 
-    protected final CredentialProvider credentialProvider;
-    protected final String callbackUrl;
-    protected final SAML2Configuration configuration;
+    private final CredentialProvider credentialProvider;
+    private final String callbackUrl;
+    private final SAML2Configuration configuration;
     private String spMetadata;
     private MetadataResolver metadataResolver;
 
@@ -75,9 +77,30 @@ public class SAML2ServiceProviderMetadataResolver implements SAML2MetadataResolv
         }
     }
 
-    protected MetadataResolver prepareServiceProviderMetadata() {
+    private MetadataResolver prepareServiceProviderMetadata() {
         try {
-            final SAMLMetadataGenerator metadataGenerator = buildMetadataGenerator();
+            final SAML2MetadataGenerator metadataGenerator = new SAML2MetadataGenerator();
+            metadataGenerator.setWantAssertionSigned(configuration.isWantsAssertionsSigned());
+            metadataGenerator.setAuthnRequestSigned(configuration.isAuthnRequestSigned());
+            metadataGenerator.setNameIdPolicyFormat(configuration.getNameIdPolicyFormat());
+            metadataGenerator.setRequestedAttributes(configuration.getRequestedServiceProviderAttributes());
+
+            metadataGenerator.setCredentialProvider(this.credentialProvider);
+
+            metadataGenerator.setEntityId(configuration.getServiceProviderEntityId());
+            metadataGenerator.setRequestInitiatorLocation(callbackUrl);
+            // Assertion consumer service url is the callback URL
+            metadataGenerator.setAssertionConsumerServiceUrl(callbackUrl);
+            final String logoutUrl = CommonHelper.addParameter(callbackUrl, LOGOUT_ENDPOINT_PARAMETER, "true");
+            // the logout URL is callback URL with an extra parameter
+            metadataGenerator.setSingleLogoutServiceUrl(logoutUrl);
+
+            // Algorithm support
+            metadataGenerator.setBlackListedSignatureSigningAlgorithms(
+                new ArrayList<>(configuration.getBlackListedSignatureSigningAlgorithms())
+            );
+            metadataGenerator.setSignatureAlgorithms(configuration.getSignatureAlgorithms());
+            metadataGenerator.setSignatureReferenceDigestMethods(configuration.getSignatureReferenceDigestMethods());
 
             // Initialize metadata provider for our SP and get the XML as a String
             final EntityDescriptor entity = metadataGenerator.buildEntityDescriptor();
@@ -88,41 +111,6 @@ public class SAML2ServiceProviderMetadataResolver implements SAML2MetadataResolv
         } catch (final Exception e) {
             throw new TechnicalException("Unable to generate metadata for service provider", e);
         }
-    }
-    
-    protected SAMLMetadataGenerator buildMetadataGenerator() {
-        final SAML2MetadataGenerator metadataGenerator = new SAML2MetadataGenerator();
-        fillSAML2MetadataGenerator(metadataGenerator);
-        return metadataGenerator;
-    }
-
-    protected void fillSAML2MetadataGenerator(final SAML2MetadataGenerator metadataGenerator) {
-        metadataGenerator.setWantAssertionSigned(configuration.isWantsAssertionsSigned());
-        metadataGenerator.setAuthnRequestSigned(configuration.isAuthnRequestSigned());
-        metadataGenerator.setSignMetadata(configuration.isSignMetadata());
-        metadataGenerator.setNameIdPolicyFormat(configuration.getNameIdPolicyFormat());
-        metadataGenerator.setRequestedAttributes(configuration.getRequestedServiceProviderAttributes());
-
-        metadataGenerator.setCredentialProvider(this.credentialProvider);
-
-        metadataGenerator.setEntityId(configuration.getServiceProviderEntityId());
-        metadataGenerator.setRequestInitiatorLocation(callbackUrl);
-        // Assertion consumer service url is the callback URL
-        metadataGenerator.setAssertionConsumerServiceUrl(callbackUrl);
-        metadataGenerator.setResponseBindingType(configuration.getResponseBindingType());
-        final String logoutUrl = CommonHelper.addParameter(callbackUrl, LOGOUT_ENDPOINT_PARAMETER, "true");
-        // the logout URL is callback URL with an extra parameter
-        metadataGenerator.setSingleLogoutServiceUrl(logoutUrl);
-
-        // Algorithm support
-        metadataGenerator.setBlackListedSignatureSigningAlgorithms(
-            new ArrayList<>(configuration.getBlackListedSignatureSigningAlgorithms())
-        );
-        metadataGenerator.setSignatureAlgorithms(configuration.getSignatureAlgorithms());
-        metadataGenerator.setSignatureReferenceDigestMethods(configuration.getSignatureReferenceDigestMethods());
-
-        metadataGenerator.setSupportedProtocols(configuration.getSupportedProtocols());
-        metadataGenerator.setContactPersons(configuration.getContactPersons());
     }
 
     private void writeServiceProviderMetadataToResource(final String tempMetadata) throws Exception {
@@ -148,6 +136,22 @@ public class SAML2ServiceProviderMetadataResolver implements SAML2MetadataResolv
                 transformer.transform(source, result);
                 try (final OutputStream spMetadataOutputStream = metadataResource.getOutputStream()) {
                     spMetadataOutputStream.write(result.getWriter().toString().getBytes(StandardCharsets.UTF_8));
+                }
+
+                if (configuration.isSignMetadata()) {
+                    final List<String> args = new ArrayList<>();
+                    args.add("--sign ");
+                    args.add("--inFile ");
+                    args.add(metadataResource.getFile().getCanonicalPath());
+                    args.add("--key ");
+                    args.add(configuration.getSigningKeyFile().getCanonicalPath());
+                    args.add("--certificate ");
+                    args.add(configuration.getSigningBinaryCertificatePath().getCanonicalPath());
+                    args.add("--outFile ");
+                    args.add(metadataResource.getFile().getCanonicalPath());
+                    logger.debug("Signing metadata using certificate [{}] and key [{}]", configuration.getSigningBinaryCertificatePath(),
+                        configuration.getSigningKeyFile());
+                    XMLSecTool.main(args.toArray(new String[args.size()]));
                 }
             }
         }

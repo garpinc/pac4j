@@ -35,7 +35,7 @@ public final class OAuth20ClientTests implements TestsConstants {
         FacebookClient client = new FacebookClient(KEY, SECRET);
         client.setCallbackUrl(CALLBACK_URL);
         ((StaticOrRandomStateGenerator) client.getConfiguration().getStateGenerator()).setStateData("OK");
-        final FoundAction action = (FoundAction) client.getRedirectionAction(MockWebContext.create()).get();
+        final FoundAction action = (FoundAction) client.redirect(MockWebContext.create()).get();
         URL url = new URL(action.getLocation());
         assertTrue(url.getQuery().contains("state=OK"));
     }
@@ -46,11 +46,11 @@ public final class OAuth20ClientTests implements TestsConstants {
         client.setCallbackUrl(CALLBACK_URL);
         ((StaticOrRandomStateGenerator) client.getConfiguration().getStateGenerator()).setStateData("oldstate");
         final MockWebContext mockWebContext = MockWebContext.create();
-        FoundAction action = (FoundAction) client.getRedirectionAction(mockWebContext).get();
+        FoundAction action = (FoundAction) client.redirect(mockWebContext).get();
         URL url = new URL(action.getLocation());
         final Map<String, String> stringMap = TestsHelper.splitQuery(url);
         assertEquals(stringMap.get("state"), "oldstate");
-        action = (FoundAction) client.getRedirectionAction(mockWebContext).get();
+        action = (FoundAction) client.redirect(mockWebContext).get();
         URL url2 = new URL(action.getLocation());
         final Map<String, String> stringMap2 = TestsHelper.splitQuery(url2);
         assertEquals(stringMap2.get("state"), "oldstate");
@@ -60,12 +60,12 @@ public final class OAuth20ClientTests implements TestsConstants {
     public void testStateRandom() throws MalformedURLException {
         OAuth20Client client = new FacebookClient(KEY, SECRET);
         client.setCallbackUrl(CALLBACK_URL);
-        FoundAction action = (FoundAction) client.getRedirectionAction(MockWebContext.create()).get();
+        FoundAction action = (FoundAction) client.redirect(MockWebContext.create()).get();
         URL url = new URL(action.getLocation());
         final Map<String, String> stringMap = TestsHelper.splitQuery(url);
         assertNotNull(stringMap.get("state"));
 
-        action = (FoundAction) client.getRedirectionAction(MockWebContext.create()).get();
+        action = (FoundAction) client.redirect(MockWebContext.create()).get();
         URL url2 = new URL(action.getLocation());
         final Map<String, String> stringMap2 = TestsHelper.splitQuery(url2);
         assertNotNull(stringMap2.get("state"));
@@ -74,7 +74,7 @@ public final class OAuth20ClientTests implements TestsConstants {
 
     @Test
     public void testGetRedirectionGithub() {
-        final FoundAction action = (FoundAction) getClient().getRedirectionAction(MockWebContext.create()).get();
+        final FoundAction action = (FoundAction) getClient().redirect(MockWebContext.create()).get();
         final String url = action.getLocation();
         assertTrue(url != null && !url.isEmpty());
     }
@@ -96,16 +96,14 @@ public final class OAuth20ClientTests implements TestsConstants {
     public void testMissingKey() {
         final OAuth20Client client = getClient();
         client.setKey(null);
-        TestsHelper.expectException(() -> client.getRedirectionAction(MockWebContext.create()),
-            TechnicalException.class, "key cannot be blank");
+        TestsHelper.expectException(() -> client.redirect(MockWebContext.create()), TechnicalException.class, "key cannot be blank");
     }
 
     @Test
     public void testMissingSecret() {
         final OAuth20Client client = getClient();
         client.setSecret(null);
-        TestsHelper.expectException(() -> client.getRedirectionAction(MockWebContext.create()),
-            TechnicalException.class, "secret cannot be blank");
+        TestsHelper.expectException(() -> client.redirect(MockWebContext.create()), TechnicalException.class, "secret cannot be blank");
     }
 
     @Test
@@ -131,7 +129,7 @@ public final class OAuth20ClientTests implements TestsConstants {
 
     @Test
     public void testDefaultScopeGoogle() {
-        getGoogleClient().getRedirectionAction(MockWebContext.create());
+        getGoogleClient().redirect(MockWebContext.create());
     }
 
     @Test
@@ -155,6 +153,13 @@ public final class OAuth20ClientTests implements TestsConstants {
         final LinkedIn2Client client = getLinkedInClient();
         client.setScope(null);
         TestsHelper.initShouldFail(client, "scope cannot be blank");
+    }
+
+    @Test
+    public void testMissingFieldsLinkedIn() {
+        final LinkedIn2Client client = getLinkedInClient();
+        client.setFields(null);
+        TestsHelper.initShouldFail(client, "fields cannot be blank");
     }
 
     @Test

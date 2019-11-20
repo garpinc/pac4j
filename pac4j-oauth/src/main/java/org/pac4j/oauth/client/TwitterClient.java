@@ -1,7 +1,9 @@
 package org.pac4j.oauth.client;
 
 import com.github.scribejava.apis.TwitterApi;
+import com.github.scribejava.core.builder.api.BaseApi;
 import com.github.scribejava.core.builder.api.DefaultApi10a;
+import com.github.scribejava.core.oauth.OAuth10aService;
 import org.pac4j.core.exception.http.RedirectionActionHelper;
 import org.pac4j.oauth.profile.twitter.TwitterProfile;
 import org.pac4j.oauth.profile.twitter.TwitterProfileDefinition;
@@ -56,7 +58,7 @@ public class TwitterClient extends OAuth10Client {
         super.clientInit();
     }
 
-    protected DefaultApi10a getApi() {
+    protected BaseApi<OAuth10aService> getApi() {
         final DefaultApi10a api;
         if (this.alwaysConfirmAuthorization == false) {
             api = TwitterApi.Authenticate.instance();

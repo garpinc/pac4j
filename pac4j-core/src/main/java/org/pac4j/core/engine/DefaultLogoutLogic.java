@@ -53,9 +53,24 @@ public class DefaultLogoutLogic<R, C extends WebContext> extends AbstractExcepti
             } else {
                 logoutUrlPattern = inputLogoutUrlPattern;
             }
-            final boolean localLogout = inputLocalLogout == null || inputLocalLogout;
-            final boolean destroySession = inputDestroySession != null && inputDestroySession;
-            final boolean centralLogout = inputCentralLogout != null && inputCentralLogout;
+            final boolean localLogout;
+            if (inputLocalLogout == null) {
+                localLogout = true;
+            } else {
+                localLogout = inputLocalLogout;
+            }
+            final boolean destroySession;
+            if (inputDestroySession == null) {
+                destroySession = false;
+            } else {
+                destroySession = inputDestroySession;
+            }
+            final boolean centralLogout;
+            if (inputCentralLogout == null) {
+                centralLogout = false;
+            } else {
+                centralLogout = inputCentralLogout;
+            }
 
             // checks
             assertNotNull("context", context);
@@ -67,7 +82,6 @@ public class DefaultLogoutLogic<R, C extends WebContext> extends AbstractExcepti
 
             // logic
             final ProfileManager manager = getProfileManager(context);
-            manager.setConfig(config);
             final List<CommonProfile> profiles = manager.getAll(true);
 
             // compute redirection URL

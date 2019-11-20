@@ -1,10 +1,6 @@
 package org.pac4j.jwt.config.encryption;
 
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEAlgorithm;
-import com.nimbusds.jose.JWEDecrypter;
-import com.nimbusds.jose.JWEEncrypter;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDHDecrypter;
 import com.nimbusds.jose.crypto.ECDHEncrypter;
 import org.pac4j.core.exception.TechnicalException;
@@ -26,8 +22,7 @@ public class ECEncryptionConfiguration extends AbstractEncryptionConfiguration {
 
     private ECPrivateKey privateKey;
 
-    public ECEncryptionConfiguration() {
-    }
+    public ECEncryptionConfiguration() {}
 
     public ECEncryptionConfiguration(final KeyPair keyPair) {
         setKeyPair(keyPair);
@@ -41,9 +36,10 @@ public class ECEncryptionConfiguration extends AbstractEncryptionConfiguration {
 
     @Override
     public boolean supports(final JWEAlgorithm algorithm, final EncryptionMethod method) {
-        return algorithm != null && method != null
-            && ECDHDecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)
-            && ECDHDecrypter.SUPPORTED_ENCRYPTION_METHODS.contains(method);
+        if (algorithm != null && method != null) {
+            return ECDHDecrypter.SUPPORTED_ALGORITHMS.contains(algorithm) && ECDHDecrypter.SUPPORTED_ENCRYPTION_METHODS.contains(method);
+        }
+        return false;
     }
 
     @Override

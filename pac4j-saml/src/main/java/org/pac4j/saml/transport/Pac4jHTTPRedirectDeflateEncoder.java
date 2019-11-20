@@ -61,7 +61,9 @@ public class Pac4jHTTPRedirectDeflateEncoder extends AbstractMessageEncoder<SAML
         final SAMLObject outboundMessage = (SAMLObject)messageContext.getMessage();
         final String endpointURL = this.getEndpointURL(messageContext).toString();
 
-        this.removeSignature(outboundMessage);
+        if (!this.isAuthnRequestSigned) {
+            this.removeSignature(outboundMessage);
+        }
 
         final String encodedMessage = this.deflateAndBase64Encode(outboundMessage);
         final String redirectURL = this.buildRedirectURL(messageContext, endpointURL, encodedMessage);
@@ -176,13 +178,7 @@ public class Pac4jHTTPRedirectDeflateEncoder extends AbstractMessageEncoder<SAML
         }
 
         List<Pair<String, String>> queryParams = urlBuilder.getQueryParams();
-        // remove the query parameters set below
-        queryParams.removeIf(p ->
-            p.getFirst().equals("SAMLRequest") ||
-            p.getFirst().equals("SAMLResponse") ||
-            p.getFirst().equals("RelayState") ||
-            p.getFirst().equals("SigAlg") ||
-            p.getFirst().equals("Signature"));
+        queryParams.clear();
 
         SAMLObject outboundMessage = messageContext.getMessage();
 
@@ -200,20 +196,18 @@ public class Pac4jHTTPRedirectDeflateEncoder extends AbstractMessageEncoder<SAML
             queryParams.add(new Pair<>("RelayState", relayState));
         }
 
-        if (isAuthnRequestSigned) {
-            SignatureSigningParameters signingParameters =
-                    SAMLMessageSecuritySupport.getContextSigningParameters(messageContext);
-            if (signingParameters != null && signingParameters.getSigningCredential() != null) {
-                String sigAlgURI =  getSignatureAlgorithmURI(signingParameters);
-                Pair<String, String> sigAlg = new Pair<>("SigAlg", sigAlgURI);
-                queryParams.add(sigAlg);
-                String sigMaterial = urlBuilder.buildQueryString();
-    
-                queryParams.add(new Pair<>("Signature", generateSignature(
-                        signingParameters.getSigningCredential(), sigAlgURI, sigMaterial)));
-            } else {
-                log.debug("No signing credential was supplied, skipping HTTP-Redirect DEFLATE signing");
-            }
+        SignatureSigningParameters signingParameters =
+                SAMLMessageSecuritySupport.getContextSigningParameters(messageContext);
+        if (signingParameters != null && signingParameters.getSigningCredential() != null) {
+            String sigAlgURI =  getSignatureAlgorithmURI(signingParameters);
+            Pair<String, String> sigAlg = new Pair<>("SigAlg", sigAlgURI);
+            queryParams.add(sigAlg);
+            String sigMaterial = urlBuilder.buildQueryString();
+
+            queryParams.add(new Pair<>("Signature", generateSignature(
+                    signingParameters.getSigningCredential(), sigAlgURI, sigMaterial)));
+        } else {
+            log.debug("No signing credential was supplied, skipping HTTP-Redirect DEFLATE signing");
         }
 
         return urlBuilder.buildURL();

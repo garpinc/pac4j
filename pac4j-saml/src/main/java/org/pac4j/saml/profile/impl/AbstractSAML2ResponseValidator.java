@@ -1,14 +1,11 @@
 package org.pac4j.saml.profile.impl;
 
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.net.BasicURLComparator;
 import net.shibboleth.utilities.java.support.net.URIComparator;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.messaging.handler.MessageHandlerException;
-import org.opensaml.saml.common.binding.security.impl.MessageReplaySecurityHandler;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.criterion.EntityRoleCriterion;
 import org.opensaml.saml.criterion.ProtocolCriterion;
@@ -29,7 +26,6 @@ import org.pac4j.saml.context.SAML2MessageContext;
 import org.pac4j.saml.crypto.SAML2SignatureTrustEngineProvider;
 import org.pac4j.saml.exceptions.*;
 import org.pac4j.saml.profile.api.SAML2ResponseValidator;
-import org.pac4j.saml.replay.ReplayCacheProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,40 +49,18 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
     protected final Decrypter decrypter;
 
     protected final LogoutHandler logoutHandler;
-    
-    protected final ReplayCacheProvider replayCache;
 
-    /**
-     * @deprecated this constructor does not accept a replay cache, replay protection will be disabled
-     */
-    @Deprecated
     protected AbstractSAML2ResponseValidator(final SAML2SignatureTrustEngineProvider signatureTrustEngineProvider,
-            final Decrypter decrypter, final LogoutHandler logoutHandler) {
-        this(signatureTrustEngineProvider, decrypter, logoutHandler, null, new BasicURLComparator());
-    }
-
-    /**
-     * @deprecated this constructor does not accept a replay cache, replay protection will be disabled
-     */
-    @Deprecated
-    protected AbstractSAML2ResponseValidator(final SAML2SignatureTrustEngineProvider signatureTrustEngineProvider,
-            final Decrypter decrypter, final LogoutHandler logoutHandler, final URIComparator uriComparator) {
-        this(signatureTrustEngineProvider, decrypter, logoutHandler, null, uriComparator);
-    }
-    
-    protected AbstractSAML2ResponseValidator(final SAML2SignatureTrustEngineProvider signatureTrustEngineProvider,
-                                             final Decrypter decrypter, final LogoutHandler logoutHandler,
-                                             final ReplayCacheProvider replayCache) {
-        this(signatureTrustEngineProvider, decrypter, logoutHandler, replayCache, new BasicURLComparator());
+                                             final Decrypter decrypter, final LogoutHandler logoutHandler) {
+        this(signatureTrustEngineProvider, decrypter, logoutHandler, new BasicURLComparator());
     }
 
     protected AbstractSAML2ResponseValidator(final SAML2SignatureTrustEngineProvider signatureTrustEngineProvider,
                                              final Decrypter decrypter, final LogoutHandler logoutHandler,
-                                             final ReplayCacheProvider replayCache, final URIComparator uriComparator) {
+                                             final URIComparator uriComparator) {
         this.signatureTrustEngineProvider = signatureTrustEngineProvider;
         this.decrypter = decrypter;
         this.logoutHandler = logoutHandler;
-        this.replayCache = replayCache;
         this.uriComparator = uriComparator;
     }
 
@@ -95,7 +69,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
      *
      * @param status the response status.
      */
-    protected void validateSuccess(final Status status) {
+    protected final void validateSuccess(final Status status) {
         String statusValue = status.getStatusCode().getValue();
         if (!StatusCode.SUCCESS.equals(statusValue)) {
             final StatusMessage statusMessage = status.getStatusMessage();
@@ -106,7 +80,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
         }
     }
 
-    protected void validateSignatureIfItExists(final Signature signature, final SAML2MessageContext context,
+    protected final void validateSignatureIfItExists(final Signature signature, final SAML2MessageContext context,
                                                final SignatureTrustEngine engine) {
         if (signature != null) {
             final String entityId = context.getSAMLPeerEntityContext().getEntityId();
@@ -122,8 +96,8 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
      * @param idpEntityId the idp entity id
      * @param trustEngine the trust engine
      */
-    protected void validateSignature(final Signature signature, final String idpEntityId,
-                                     final SignatureTrustEngine trustEngine) {
+    protected final void validateSignature(final Signature signature, final String idpEntityId,
+                                           final SignatureTrustEngine trustEngine) {
 
         final SAMLSignatureProfileValidator validator = new SAMLSignatureProfileValidator();
         try {
@@ -148,7 +122,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
         }
     }
 
-    protected void validateIssuerIfItExists(final Issuer isser, final SAML2MessageContext context) {
+    protected final void validateIssuerIfItExists(final Issuer isser, final SAML2MessageContext context) {
         if (isser != null) {
             validateIssuer(isser, context);
         }
@@ -160,7 +134,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
      * @param issuer  the issuer
      * @param context the context
      */
-    protected void validateIssuer(final Issuer issuer, final SAML2MessageContext context) {
+    protected final void validateIssuer(final Issuer issuer, final SAML2MessageContext context) {
         if (issuer.getFormat() != null && !issuer.getFormat().equals(NameIDType.ENTITY)) {
             throw new SAMLIssuerException("Issuer type is not entity but " + issuer.getFormat());
         }
@@ -171,17 +145,17 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
         }
     }
 
-    protected void validateIssueInstant(final DateTime issueInstant) {
+    protected final void validateIssueInstant(final DateTime issueInstant) {
         if (!isIssueInstantValid(issueInstant)) {
             throw new SAMLIssueInstantException("Issue instant is too old or in the future");
         }
     }
 
-    protected boolean isIssueInstantValid(final DateTime issueInstant) {
+    protected final boolean isIssueInstantValid(final DateTime issueInstant) {
         return isDateValid(issueInstant, 0);
     }
 
-    protected boolean isDateValid(final DateTime issueInstant, final int interval) {
+    protected final boolean isDateValid(final DateTime issueInstant, final int interval) {
         final DateTime now = DateTime.now(DateTimeZone.UTC);
 
         final DateTime before = now.plusSeconds(acceptedSkew);
@@ -197,7 +171,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
         return isDateValid;
     }
 
-    protected void verifyEndpoint(final Endpoint endpoint, final String destination) {
+    protected final void verifyEndpoint(final Endpoint endpoint, final String destination) {
         try {
             if (destination != null && !uriComparator.compare(destination, endpoint.getLocation())
                 && !uriComparator.compare(destination, endpoint.getResponseLocation())) {
@@ -209,25 +183,6 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
             throw new SAMLEndpointMismatchException(e);
         }
     }
-    
-    protected void verifyMessageReplay(final SAML2MessageContext context) {
-        if (replayCache == null) {
-            logger.warn("No replay cache specified, skipping replay verification");
-            return;
-        }
-
-        try {
-            MessageReplaySecurityHandler messageReplayHandler = new MessageReplaySecurityHandler();
-            messageReplayHandler.setExpires(acceptedSkew * 1000);
-            messageReplayHandler.setReplayCache(replayCache.get());
-            messageReplayHandler.initialize();
-            messageReplayHandler.invoke(context);
-        } catch (ComponentInitializationException e) {
-            throw new SAMLException(e);
-        } catch (MessageHandlerException e) {
-            throw new SAMLReplayException(e);
-        }
-    }
 
     /**
      * Decrypts an EncryptedID, using a decrypter.
@@ -237,7 +192,7 @@ public abstract class AbstractSAML2ResponseValidator implements SAML2ResponseVal
      * @return Decrypted ID or {@code null} if any input is {@code null}.
      * @throws SAMLException If the input ID cannot be decrypted.
      */
-    protected NameID decryptEncryptedId(final EncryptedID encryptedId, final Decrypter decrypter) throws SAMLException {
+    protected final NameID decryptEncryptedId(final EncryptedID encryptedId, final Decrypter decrypter) throws SAMLException {
         if (encryptedId == null) {
             return null;
         }

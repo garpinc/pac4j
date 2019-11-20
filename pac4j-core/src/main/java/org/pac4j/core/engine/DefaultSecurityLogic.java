@@ -71,7 +71,12 @@ public class DefaultSecurityLogic<R, C extends WebContext> extends AbstractExcep
         try {
 
             // default value
-            final boolean multiProfile = inputMultiProfile != null && inputMultiProfile;
+            final boolean multiProfile;
+            if (inputMultiProfile == null) {
+                multiProfile = false;
+            } else {
+                multiProfile = inputMultiProfile;
+            }
 
             // checks
             assertNotNull("context", context);
@@ -96,7 +101,6 @@ public class DefaultSecurityLogic<R, C extends WebContext> extends AbstractExcep
                 final boolean loadProfilesFromSession = profileStorageDecision.mustLoadProfilesFromSession(context, currentClients);
                 logger.debug("loadProfilesFromSession: {}", loadProfilesFromSession);
                 final ProfileManager manager = getProfileManager(context);
-                manager.setConfig(config);
                 List<UserProfile> profiles = manager.getAll(loadProfilesFromSession);
                 logger.debug("profiles: {}", profiles);
 
@@ -212,7 +216,7 @@ public class DefaultSecurityLogic<R, C extends WebContext> extends AbstractExcep
      */
     protected HttpAction redirectToIdentityProvider(final C context, final List<Client> currentClients) {
         final IndirectClient currentClient = (IndirectClient) currentClients.get(0);
-        return (HttpAction) currentClient.getRedirectionAction(context).get();
+        return (HttpAction) currentClient.redirect(context).get();
     }
 
     /**

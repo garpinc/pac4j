@@ -12,12 +12,12 @@ import java.util.Optional;
  * retrieve his user profile.</p>
  * <p>Clients can be "indirect": in that case, credentials are not provided with the HTTP request, but the user must be redirected to
  * an identity provider to perform login, the original requested url being saved and restored after the authentication process is done.</p>
- * <p>The {@link #getRedirectionAction(WebContext)} method is called to get the redirection to the identity provider,
+ * <p>The {@link #redirect(WebContext)} method is called to redirect the user to the identity provider,
  * the {@link #getCredentials(WebContext)} method is used to retrieve the credentials provided by the remote identity provider and
  * the {@link #getUserProfile(Credentials, WebContext)} method is called to get the user profile from the identity provider and based
  * on the provided credentials.</p>
  * <p>Clients can be "direct": in that case, credentials are provided along with the HTTP request and validated by the application.</p>
- * <p>The {@link #getRedirectionAction(WebContext)} method is not used, the {@link #getCredentials(WebContext)} method is used to retrieve
+ * <p>The {@link #redirect(WebContext)} method is not used, the {@link #getCredentials(WebContext)} method is used to retrieve
  * and validate the credentials provided and the {@link #getUserProfile(Credentials, WebContext)} method is called to get the user profile
  * from the appropriate system.</p>
  *
@@ -34,12 +34,12 @@ public interface Client<C extends Credentials> {
     String getName();
 
     /**
-     * <p>Return the redirection action to the authentication provider (indirect clients).</p>
+     * <p>Redirect to the authentication provider (indirect clients).</p>
      *
      * @param context the current web context
      * @return the redirection to perform (optional)
      */
-    Optional<RedirectionAction> getRedirectionAction(WebContext context);
+    Optional<RedirectionAction> redirect(WebContext context);
 
     /**
      * <p>Get the credentials from the web context. If no validation was made remotely (direct client), credentials must be validated at
@@ -58,15 +58,6 @@ public interface Client<C extends Credentials> {
      * @return the user profile (optional)
      */
     Optional<UserProfile> getUserProfile(C credentials, WebContext context);
-
-    /**
-     * Renew the user profile.
-     *
-     * @param profile the user profile
-     * @param context the current web context
-     * @return the renewed user profile (optional).
-     */
-    Optional<UserProfile> renewUserProfile(UserProfile profile, WebContext context);
 
     /**
      * <p>Return the logout action (indirect clients).</p>

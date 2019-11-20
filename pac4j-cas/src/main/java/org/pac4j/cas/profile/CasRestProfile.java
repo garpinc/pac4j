@@ -14,8 +14,7 @@ public final class CasRestProfile extends CommonProfile {
     private static final long serialVersionUID = -1688563185891330018L;
     private static final String TGT_KEY = "$tgt_key";
 
-    public CasRestProfile() {
-    }
+    public CasRestProfile() { }
 
     public CasRestProfile(final String ticketGrantingTicketId, final String userName) {
         super();
@@ -43,8 +42,11 @@ public final class CasRestProfile extends CommonProfile {
             return false;
         }
 
-        return obj instanceof CasRestProfile
-            && (obj == this || getTicketGrantingTicketId().equals(((CasRestProfile) obj).getTicketGrantingTicketId()));
+        if (!(obj instanceof CasRestProfile)) {
+            return false;
+        }
 
+        return obj == this ||
+            getTicketGrantingTicketId().equals(((CasRestProfile)obj).getTicketGrantingTicketId());
     }
 }

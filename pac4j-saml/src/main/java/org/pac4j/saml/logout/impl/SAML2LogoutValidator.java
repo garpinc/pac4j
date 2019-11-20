@@ -1,20 +1,17 @@
 package org.pac4j.saml.logout.impl;
 
-import org.apache.commons.lang.StringUtils;
 import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
 import org.pac4j.core.credentials.Credentials;
-import org.pac4j.core.exception.http.FoundAction;
 import org.pac4j.core.exception.http.OkAction;
 import org.pac4j.core.logout.handler.LogoutHandler;
 import org.pac4j.saml.context.SAML2MessageContext;
 import org.pac4j.saml.crypto.SAML2SignatureTrustEngineProvider;
 import org.pac4j.saml.exceptions.SAMLException;
 import org.pac4j.saml.profile.impl.AbstractSAML2ResponseValidator;
-import org.pac4j.saml.replay.ReplayCacheProvider;
 
 import java.util.List;
 
@@ -27,12 +24,9 @@ import java.util.List;
  */
 public class SAML2LogoutValidator extends AbstractSAML2ResponseValidator {
 
-    private String postLogoutURL;
-
     public SAML2LogoutValidator(final SAML2SignatureTrustEngineProvider engine, final Decrypter decrypter,
-                                final LogoutHandler logoutHandler, String postLogoutURL, final ReplayCacheProvider replayCache) {
-        super(engine, decrypter, logoutHandler, replayCache);
-        this.postLogoutURL = postLogoutURL;
+                                final LogoutHandler logoutHandler) {
+        super(engine, decrypter, logoutHandler);
     }
 
     /**
@@ -59,13 +53,9 @@ public class SAML2LogoutValidator extends AbstractSAML2ResponseValidator {
             final SignatureTrustEngine engine = this.signatureTrustEngineProvider.build();
             validateLogoutResponse(logoutResponse, context, engine);
 
-            if (StringUtils.isNotBlank(postLogoutURL)){
-                // if custom post logout URL is present then redirect to it
-                throw new FoundAction(postLogoutURL);
-            } else {
-                // nothing to reply to the logout response
-                throw new OkAction("");
-            }
+            // nothing to reply to the logout response
+            throw new OkAction("");
+
         } else {
             throw new SAMLException("Must be a LogoutRequest or LogoutResponse type");
         }

@@ -1,5 +1,6 @@
 package org.pac4j.oauth.config;
 
+import com.github.scribejava.core.builder.api.BaseApi;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.Token;
 import com.github.scribejava.core.oauth.OAuthService;
@@ -17,37 +18,55 @@ import java.util.function.Function;
  * @author Jerome Leleu
  * @since 2.0.0
  */
-public abstract class OAuthConfiguration<S extends OAuthService, T extends Token> extends InitializableObject {
+public class OAuthConfiguration<S extends OAuthService, T extends Token> extends InitializableObject {
 
     public static final String OAUTH_TOKEN = "oauth_token";
 
     public static final String RESPONSE_TYPE_CODE = "code";
 
-    protected String key;
+    private String key;
 
-    protected String secret;
+    private String secret;
 
-    protected boolean tokenAsHeader;
+    private boolean tokenAsHeader;
 
-    protected String responseType = RESPONSE_TYPE_CODE;
+    private String responseType = RESPONSE_TYPE_CODE;
 
-    protected String scope;
+    private String scope;
 
-    protected Function<WebContext, Boolean> hasBeenCancelledFactory = ctx -> false;
+    private BaseApi<S> api;
 
-    protected OAuthProfileDefinition profileDefinition;
+    private Function<WebContext, Boolean> hasBeenCancelledFactory = ctx -> false;
 
-    protected HttpClientConfig httpClientConfig;
+    private OAuthProfileDefinition profileDefinition;
+
+    private HttpClientConfig httpClientConfig;
 
     @Override
     protected void internalInit() {
         CommonHelper.assertNotBlank("key", this.key);
         CommonHelper.assertNotBlank("secret", this.secret);
+        CommonHelper.assertNotNull("api", api);
         CommonHelper.assertNotNull("hasBeenCancelledFactory", hasBeenCancelledFactory);
         CommonHelper.assertNotNull("profileDefinition", profileDefinition);
     }
 
-    public abstract S buildService(final WebContext context, final IndirectClient client);
+    /**
+     * Build an OAuth service from the web context and with a state.
+     *
+     * @param context the web context
+     * @param client the client
+     * @param state a given state
+     * @return the OAuth service
+     */
+    public S buildService(final WebContext context, final IndirectClient client, final String state) {
+        init();
+
+        final String finalCallbackUrl = client.computeFinalCallbackUrl(context);
+
+        return getApi().createService(this.key, this.secret, finalCallbackUrl, this.scope, null, state, this.responseType, null,
+                this.httpClientConfig, null);
+    }
 
     public String getKey() {
         return key;
@@ -89,6 +108,14 @@ public abstract class OAuthConfiguration<S extends OAuthService, T extends Token
         this.scope = scope;
     }
 
+    public BaseApi<S> getApi() {
+        return api;
+    }
+
+    public void setApi(final BaseApi<S> api) {
+        this.api = api;
+    }
+
     public Function<WebContext, Boolean> getHasBeenCancelledFactory() {
         return hasBeenCancelledFactory;
     }
@@ -111,5 +138,12 @@ public abstract class OAuthConfiguration<S extends OAuthService, T extends Token
 
     public void setHttpClientConfig(final HttpClientConfig httpClientConfig) {
         this.httpClientConfig = httpClientConfig;
+    }
+
+    @Override
+    public String toString() {
+        return CommonHelper.toNiceString(this.getClass(), "key", key, "secret", "[protected]", "tokenAsHeader", tokenAsHeader,
+            "responseType", responseType, "scope", scope, "api", api, "hasBeenCancelledFactory", hasBeenCancelledFactory,
+            "profileDefinition", profileDefinition, "httpClientConfig", httpClientConfig);
     }
 }

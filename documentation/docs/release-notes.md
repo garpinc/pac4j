@@ -7,9 +7,9 @@ title: Release notes&#58;
 
 - Improved the profile manager configuration
 - Renamed `J2E` components as `JEE`
-- Started updating dependencies via Renovate
+- Updated all dependencies
 - A client can return any kind of profile (using a custom `AuthorizationGenerator` or `ProfileCreator`) and even a minimal user profile (`UserProfile`)
-- HTTP actions are no longer applied automatically to the web context (the `setResponseStatus` and `writeResponseContent` methods have been removed from the `WebContext` interface), an `HttpActionAdapter` must be used for that. Multiple HTTP actions (inheriting from `HttpAction`) are created to handle the necessary HTTP actions. The `RedirectAction` is replaced by the new HTTP actions inheriting from `RedirectionAction`. The `redirect` method is renamed as `getRedirectionAction`
+- Multiple HTTP actions (inheriting from `HttpAction`) are created to handle the necessary HTTP actions. They are only applied to the web context by the appropriate `HttpActionAdapter`. The `RedirectAction` is replaced by the new HTTP actions inheriting from `RedirectionAction`. The `setResponseStatus` and `writeResponseContent` methods have been removed from the `WebContext` interface
 - By default, the CSRF check applies on the PUT, PATCH and DELETE requests in addition to the POST requests
 - "csrf,securityheaders" is the default authorizers definition
 - Renamed the `SAMLMessageStorage*` classes as `SAMLMessageStore*` (based on `Store`)
@@ -19,24 +19,6 @@ title: Release notes&#58;
 - Use the 303 "See Other" and 307 "Temporary Redirect" HTTP actions after a POST request (`RedirectionActionHelper`)
 - Handles originally requested URLs with POST method
 - Add HTTP POST Simple-Sign protocol implementation
-- Properly handle states and nonces for multiple OIDC clients
-- A profile can be renewed by its client when it's expired
-
-**v3.8.3**:
-
-- Upgrade the nimbus-jose-jwt library to version 7.9 because of [CVE-2019-17195](https://connect2id.com/blog/nimbus-jose-jwt-7-9)
-
-**v3.8.2**:
-
-- Add customizable SAML post Logout URL
-- QualifiedName must not be included by default in SAML authentication requests
-- Added replay protectection to the SAML client.
-- Fix SAML signature validation w.r.t. WantAssertionsSigned handling. Signing is now always required, even when WantAssertionsSigned is disabled. WantAssertionsSigned now requires explicit signing of the assertions, not the response.
-- Added support for the SAML artifact binding for the authentication response.
-- Sign metadata when configured to do so and open up the metadata generation API for customization.
-- Never sign AuthnRequests with XMLSig when using REDIRECT binding, signing is done via the Signature query parameter.
-- Added support for LinkedIn v2 API
-- Added support for FigShare 
 
 **v3.7.0**:
 
